@@ -2831,3 +2831,116 @@ db.science.insertOne({
 db.science.updateOne({}, { $inc: { a: 0.1 } });
 
 db.science.updateOne({}, { $inc: { a: Decimal128("0.1") } });
+
+// Section 14: MongoDB & Security
+
+// use Admin;
+
+db.createUser({
+  user: "Satheesh S M",
+  pwd: "sms",
+  roles: ["userAdminAnyDatabase"],
+});
+
+// use shop;
+
+db.createUser({ user: "appdev", pwd: "dev", roles: ["readWrite"] });
+
+db.auth("appdev", "dev");
+
+db.products.insertOne({ name: "Conditioner" });
+
+// mongod -u "appdev" - p "dev" --authenticationDatabase admin;
+
+db.dropUser("Satheesh S M");
+
+// Section 15: Performance, Fault Tolerance & Deployment
+
+db.createCollection("capped", {
+  capped: true,
+  size: 1000, // bytes
+  max: 3, // no. of documents
+});
+
+db.capped.insertMany([
+  {
+    name: "Satheesh S M",
+  },
+  {
+    name: "Santhosh M",
+  },
+  {
+    name: "Harish S M",
+  },
+]);
+
+db.capped.insertOne({
+  name: "Alex",
+});
+
+db.capped.find().sort({ $natural: -1 });
+
+db.products.insertOne({
+  name: "Macbook M4 Pro",
+  description:
+    "High-performance laptop with a sleek aluminum finish and retina display.",
+  category: "Electronics > Computers > Laptops",
+  brand: "Apple",
+  price: {
+    amount: 320000,
+    currency: "INR",
+  },
+  inventory: {
+    quantity_in_stock: 45,
+    reserved: 3,
+  },
+  attributes: {
+    processor: "M4 Pro",
+    ram: "16GB",
+    storage: "512GB SSD",
+    display: "16-inch 4K",
+    weight_kg: 1.8,
+  },
+  tags: ["business", "lightweight", "computers"],
+  variants: [
+    {
+      color: "Space Gray",
+      sku: "LAP-M4-PRO-SG",
+    },
+    {
+      color: "Silver",
+      sku: "LAP-M4-PRO-SL",
+    },
+  ],
+  active: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
+
+// Section 16: Transactions
+
+db.users.insertOne({
+  name: "Satheesh S M",
+});
+
+db.posts.insertMany([
+  {
+    title: "My First Post",
+    userId: ObjectId("6a23d0d8477e5bbe86795116"),
+  },
+  {
+    title: "My Second Post",
+    userId: ObjectId("6a23d0d8477e5bbe86795116"),
+  },
+]);
+
+const session = db.getMongo().startSession();
+const userCollection = session.getDatabase("blog").users;
+const postsCollection = session.getDatabase("blog").posts;
+session.startTransaction();
+
+postsCollection.deleteMany({
+  userId: ObjectId("6a23d0d8477e5bbe86795116"),
+});
+userCollection.deleteOne({ name: "Satheesh S M" });
+session.commitTransaction();
